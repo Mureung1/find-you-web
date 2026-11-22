@@ -8,63 +8,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-# Website Reverse-Engineer Template
+# Find you 개발 지침
 
-## What This Is
-A reusable template for reverse-engineering any website into a clean, modern Next.js codebase using AI coding agents. The Next.js + shadcn/ui + Tailwind v4 base is pre-scaffolded — just run `/clone-website <url1> [<url2> ...]`.
-
-## Tech Stack
-- **Framework:** Next.js 16 (App Router, React 19, TypeScript strict)
-- **UI:** shadcn/ui (Base UI primitives, Tailwind CSS v4, `cn()` utility)
-- **Icons:** Lucide React (default — will be replaced/supplemented by extracted SVGs)
-- **Styling:** Tailwind CSS v4 with oklch design tokens
-- **Deployment:** Vercel
-
-## Commands
-- `npm run dev` — Start dev server
-- `npm run build` — Production build
-- `npm run lint` — ESLint check
-- `npm run typecheck` — TypeScript check
-- `npm run check` — Run lint + typecheck + build
-
-## Code Style
-- TypeScript strict mode, no `any`
-- Named exports, PascalCase components, camelCase utils
-- Tailwind utilities or scoped CSS; avoid inline styles unless behavior needs dynamic values
-- 2-space indentation
-- Responsive: mobile-first
-
-## Design Principles
-- **Pixel-perfect emulation** — match the target's spacing, colors, typography exactly
-- **No personal aesthetic changes during emulation phase** — match 1:1 first, customize later
-- **Real content** — use actual text and assets from the target site, not placeholders
-- **Beauty-first** — every pixel matters
-
-## Project Structure
-```
-src/
-  app/              # Next.js routes
-  components/       # React components
-    ui/             # shadcn/ui primitives
-    sites/<site>/   # Source-specific components, including extracted SVGs
-  lib/
-    utils.ts        # cn() utility (shadcn)
-  types/            # TypeScript interfaces
-  hooks/            # Custom React hooks
-public/
-  sites/<site>/     # Source-specific images, fonts, video, and other assets
-docs/
-  research/<site>/  # Page brief, asset map, and inspection evidence
-  design-references/ # Screenshots and visual references
-scripts/            # Asset download scripts
-.agents/
-  skills/
-    clone-website/  # Canonical cross-agent cloning workflow
-.claude/
-  commands/
-    clone-website.md # Thin Claude Code invocation bridge
-```
-
-## Agent Workflow
-- Edit `.agents/skills/clone-website/` for cloning-workflow changes. It is the canonical skill used by Codex, Cursor, and OpenCode.
-- Keep `.claude/commands/clone-website.md` as a thin Claude Code bridge to the canonical skill; do not duplicate the workflow there.
+- Find you는 동네를 기준으로 분실물과 습득물을 연결하는 한국어 웹서비스입니다.
+- `src/`는 Next.js 16 App Router, React 19, TypeScript strict, Tailwind CSS v4를 사용합니다. 폼과 필터는 키보드로 조작할 수 있어야 하며 모바일에서 읽기 쉬워야 합니다.
+- `backend/`는 Python 3.12, FastAPI, SQLite를 사용합니다. 게시글에는 고유 동네 키 `location_id`를 저장합니다. 상위 지역과 동 이름은 API의 동네 목록에서 불러옵니다.
+- 공개 검색은 공개에 동의한 분실글만 반환합니다. 습득물 사진과 식별 특징은 서버 내부에서 관리합니다. 웹 후보 확인의 성공 응답은 `has_candidate` 하나를 반환합니다.
+- 매칭 모듈 경계는 `backend/matching.py`에 두고 데이터 인터페이스를 바꿀 때 `docs/matching-contract.md`를 함께 갱신합니다.
+- Windows PowerShell 실행 절차는 README를 따릅니다. 프론트엔드 변경은 `npm.cmd run check`로 확인하고, API 변경은 로컬 FastAPI와 별도 SQLite 파일에서 검증합니다.

@@ -1,9 +1,23 @@
-export default function Home() {
-  return (
-    <main className="flex min-h-screen items-center justify-center">
-      <p className="text-muted-foreground">
-        Clone target not yet built. Run <code className="font-mono text-foreground">/clone-website</code> to start.
-      </p>
-    </main>
-  );
+import { LostExplorer } from "@/components/find-you/lost-explorer";
+import { backendOrigin } from "@/lib/backend-origin";
+import type { Location, LostItem } from "@/lib/find-you";
+
+async function loadInitialData<T>(path: string): Promise<T | null> {
+  try {
+    const response = await fetch(`${backendOrigin()}/api/${path}`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(3500),
+    });
+    return response.ok ? await response.json() : null;
+  } catch {
+    return null;
+  }
+}
+
+export default async function Home() {
+  const [initialLocations, initialItems] = await Promise.all([
+    loadInitialData<Location[]>("locations"),
+    loadInitialData<LostItem[]>("lost-items"),
+  ]);
+  return <LostExplorer initialItems={initialItems} initialLocations={initialLocations} />;
 }

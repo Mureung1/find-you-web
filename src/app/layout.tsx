@@ -1,20 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { SiteHeader } from "@/components/find-you/site-header";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "Website Clone",
-  description: "Pixel-perfect website clone",
+  title: { default: "Find you | 분실물 찾기", template: "%s | Find you" },
+  description: "동네에서 잃어버린 물건을 찾고, 분실물과 습득물을 등록하세요.",
 };
 
 export default function RootLayout({
@@ -23,11 +13,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="ko" className="h-full antialiased">
+      <body className="min-h-full">
+        <SiteHeader />
+        {children}
+      </body>
     </html>
   );
 }

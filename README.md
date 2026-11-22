@@ -1,161 +1,57 @@
-<div align="center">
+# Find you
 
-# AI Website Cloner Template
+동네를 기준으로 분실물과 습득물을 연결하는 웹서비스입니다. 첫 MVP에서는 가상 데이터로 공개 분실글 검색, 분실·습득 등록, 비공개 습득물의 후보 확인을 검증합니다.
 
-### Clone any website with one command
+## Windows PowerShell에서 실행
 
-Give your AI coding agent a URL and watch it recreate the website as a clean Next.js app.
+Node.js 24와 Windows용 CPython 3.12가 필요합니다. `py -3.12`가 없으면 설치한 Python 3.12 실행 파일 경로로 바꿔 주세요. PATH의 `python`을 쓸 때는 Windows용 CPython 3.12인지 확인하세요.
 
-**Best results with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) + Opus 5.5. Also supports Codex, Cursor, and OpenCode.**
-
-[![Use this template](https://img.shields.io/badge/Use_this_template-Create_your_copy-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://github.com/JCodesMore/ai-website-cloner-template/generate) [![Discord](https://img.shields.io/badge/Join_the_community-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/hrTSX5yTpB)
-
-[Quick Start](#quick-start) · [Watch Demo](#demo) · [Supported Platforms](#supported-platforms)
-
-<a href="https://github.com/JCodesMore/ai-website-cloner-template/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License" /></a> <a href="https://github.com/JCodesMore/ai-website-cloner-template"><img src="https://img.shields.io/github/stars/JCodesMore/ai-website-cloner-template?style=flat" alt="Stars" /></a> <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/JCodesMore/ai-website-cloner-template/badges/token-badge.json" alt="tokens" />
-
-  <a href="https://trendshift.io/repositories/24302?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-24302" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/24302" alt="JCodesMore%2Fai-website-cloner-template | Trendshift" width="250" height="55" /></a> <a href="https://www.star-history.com/jcodesmore/ai-website-cloner-template/"><picture><source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=JCodesMore/ai-website-cloner-template&amp;theme=dark" /><source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=JCodesMore/ai-website-cloner-template" /><img alt="Star History Global Rank" src="https://api.star-history.com/badge?repo=JCodesMore/ai-website-cloner-template" width="216" height="55" /></picture></a>
-
-<br />
-<sub><strong>SPONSORED BY</strong></sub>
-<br /><br />
-<a href="https://www.swiftproxy.net/?ref=JCodesMore"><img src="docs/assets/sponsors/swiftproxy-banner.webp" alt="Swiftproxy residential proxies for inspecting websites from 195+ locations" width="680" /></a>
-<br />
-<sub>Inspect and compare websites from any region with rotating or static residential IPs in 195+ locations, over HTTP(S) and SOCKS5. Free testing, plus 10% off with code <code>PROXY90</code>. <a href="https://www.swiftproxy.net/?ref=JCodesMore">Try&nbsp;Swiftproxy&nbsp;→</a></sub>
-
-</div>
-
----
-
-## Demo
-
-[![Watch the demo](docs/design-references/comparison.png)](https://youtu.be/O669pVZ_qr0)
-
-> Click the image above to watch the full demo on YouTube.
-
-## Quick Start
-
-### 1. Set up your project
-
-**Recommended: ask your agent.** Paste this into Codex, Claude Code, or your coding agent:
-
-```text
-Set up https://github.com/JCodesMore/ai-website-cloner-template
-as a standalone project in a new folder on my computer.
-Ask me where to put it. Clone the repository, remove its origin remote,
-install dependencies, and run npm run check. Leave it ready for me
-to clone a website.
+```powershell
+node --version
+py -3.12 --version
+npm.cmd ci
+py -3.12 -m venv .venv
+& .\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
 ```
 
-**Or create your own GitHub repository:**
+터미널 두 개에서 다음 명령을 각각 실행합니다.
 
-[![Use this template](https://img.shields.io/badge/Use_this_template-Create_your_copy-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://github.com/JCodesMore/ai-website-cloner-template/generate)
-
-Give it a name and click **Create repository**. Then give your agent the new repository's link and ask it to clone it onto your computer, install dependencies, and run `npm run check`.
-
-### 2. Clone a website
-
-Open the project in your agent with browser access enabled. In Claude Code or Cursor, run:
-
-```text
-/clone-website https://example.com
+```powershell
+# 터미널 1 · FastAPI
+& .\.venv\Scripts\python.exe -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
 ```
 
-Replace the URL with the website you want to recreate. Once it's built, ask your agent for any changes you want.
-
-## Supported Platforms
-
-| Agent                                                         | Status                     |
-| ------------------------------------------------------------- | -------------------------- |
-| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | **Recommended** — Opus 5.5 |
-| [Codex CLI](https://github.com/openai/codex)                  | Supported                  |
-| [OpenCode](https://opencode.ai/)                              | Supported                  |
-| [Cursor](https://cursor.com/)                                 | Supported                  |
-
-## Prerequisites
-
-- [Node.js](https://nodejs.org/) 24+
-- An AI coding agent (see [Supported Platforms](#supported-platforms))
-
-## Tech Stack
-
-- **Next.js 16** — App Router, React 19, TypeScript strict
-- **shadcn/ui** — Base UI primitives + Tailwind CSS v4
-- **Tailwind CSS v4** — oklch design tokens
-- **Lucide React** — default icons (replaced by extracted SVGs during cloning)
-
-## How It Works
-
-The `/clone-website` skill follows four steps:
-
-1. **Map** — map source URLs to local routes and preserve existing work.
-2. **Observe** — inspect desktop/mobile pages, extract real assets and fonts, and exercise alternate states.
-3. **Build** — implement editable components and working interactions; delegate independent sections when useful.
-4. **Compare** — review source and local pages at matched sizes/states, repair visible differences, and run the production check.
-
-Framer pages and animated sites have focused inspection guidance for responsive variants, media, sticky scenes, and scroll/time-driven motion. Direct HTTP or asset tools handle extraction where practical; browser comparisons establish appearance and behavior. Deliverables include route mappings, run instructions, comparison screenshots, and any remaining gaps.
-
-## Use Cases
-
-- **Platform migration** — rebuild a site you own from WordPress/Webflow/Squarespace into a modern Next.js codebase
-- **Lost source code** — your site is live but the repo is gone, the developer left, or the stack is legacy. Get the code back in a modern format
-- **Learning** — deconstruct how production sites achieve specific layouts, animations, and responsive behavior by working with real code
-
-## Not Intended For
-
-- **Phishing or impersonation** — this project must not be used for deceptive purposes, impersonation, or any activity that breaks the law.
-- **Passing off someone's design as your own** — logos, brand assets, and original copy belong to their owners.
-- **Violating terms of service** — some sites explicitly prohibit scraping or reproduction. Check first.
-
-## Project Structure
-
-```
-src/
-  app/              # Next.js routes
-  components/       # React components
-    ui/             # shadcn/ui primitives
-    sites/<site>/   # Source-specific components and extracted SVGs
-  lib/utils.ts      # cn() utility
-  types/            # TypeScript interfaces
-  hooks/            # Custom React hooks
-public/
-  sites/<site>/     # Source-specific images, fonts, videos, and other assets
-docs/
-  research/<site>/  # Page brief, asset map, and inspection evidence
-  design-references/ # Screenshots
-.agents/skills/
-  clone-website/    # Canonical skill and inspection reference
-.claude/commands/
-  clone-website.md  # Thin Claude Code bridge
-AGENTS.md           # Agent instructions (single source of truth)
-CLAUDE.md           # Claude Code config (imports AGENTS.md)
+```powershell
+# 터미널 2 · Next.js
+npm.cmd run dev -- --hostname 127.0.0.1
 ```
 
-## Commands
+- 웹은 [http://127.0.0.1:3000](http://127.0.0.1:3000)에서 열립니다.
+- API 상태는 [헬스 체크](http://127.0.0.1:8000/api/health), API 명세는 [FastAPI 문서](http://127.0.0.1:8000/docs)에서 확인할 수 있습니다.
+- Next.js의 `/api/*` 요청은 기본적으로 `http://127.0.0.1:8000`에 전달됩니다. 포트를 바꾸면 Next.js를 실행하기 전에 `FIND_YOU_API_ORIGIN`을 지정하세요.
+- SQLite는 기본적으로 `backend/data/find-you.sqlite3`에 저장됩니다. 독립 검증용 DB를 사용하려면 API 시작 전에 `$env:FIND_YOU_DB_PATH = 'temp/demo.sqlite3'`처럼 지정하세요.
+- 프론트엔드 린트, 타입 검사, 빌드를 한 번에 실행하려면 `npm.cmd run check`를 사용합니다.
 
-```bash
-npm run dev    # Start dev server
-npm run build  # Production build
-npm run lint   # ESLint check
-npm run typecheck # TypeScript check
-npm run check  # Run lint + typecheck + build
-```
+## 가상 데이터로 확인
 
-### If using docker
+1. 홈에서 공개 분실글 전체를 확인합니다. 동네 필터에서 `서울 마포구 전체` 또는 `성산동`, `연남동` 같은 동네를 선택합니다. `이어폰`을 검색하고 물건 종류를 추가하면 검색어와 필터가 함께 적용됩니다. `망원동`에서는 결과가 비어 있으며 `검색·필터 초기화`로 전체 목록을 다시 열 수 있습니다.
+2. 분실물을 각각 공개 동의와 비동의로 등록합니다. 공개에 동의한 글은 홈에서 검색할 수 있습니다.
+3. 습득물 등록에서 물건 이름과 식별 특징을 입력합니다. 저장된 습득물과 사진용 가상 이미지 데이터는 서버 내부에서 관리합니다.
+4. `특징으로 찾기`에서 `서울 마포구 성산동`, `생활용품`, `손잡이에 별 스티커`를 입력하면 **후보 있음**이 표시됩니다. 처음 생성한 DB에서 동네만 `연남동`으로 바꾸면 **후보 없음**이 표시됩니다. 결과는 데모이며, 가상 어댑터는 동네·종류·정규화한 특징이 일치하는 보관 중 습득물을 확인합니다.
 
-```bash
-docker compose up app --build # build and run the app
-docker compose up dev --build # run the app in dev mode on port 3001
-```
+이전 가상 장소로 등록한 글은 API를 재시작하면 해당 동네로 옮겨집니다. 기존 글과 비공개 사진은 SQLite에 보존됩니다.
 
-## Agent Support
+`src/`에는 Next.js App Router·TypeScript·Tailwind 화면이, `backend/`에는 FastAPI·SQLite와 가상 매칭 어댑터가 있습니다. 팀원과 합의할 데이터와 검색 인터페이스는 [매칭 모듈 계약 초안](docs/matching-contract.md)에 정리했습니다.
 
-The project keeps one portable Agent Skill at `.agents/skills/clone-website/`. Codex, Cursor, and OpenCode read it directly. Claude Code uses the small command bridge at `.claude/commands/clone-website.md` so `/clone-website` and its arguments continue to work without exposing a duplicate skill to the other agents.
+## 다음 단계
 
-## Star History
+- 사진 업로드와 비공개 저장·조회 권한
+- 계정과 소유자·관리자 권한
+- 소유권 확인, 반환 처리와 상태 갱신
+- 실제 AI 매칭 모듈, 검색 인덱스 및 성능 평가 연결
 
-![Star History Chart](docs/assets/star-history.png)
+현재 사진 저장 구조에는 가상 습득물 이미지 한 장을 시드로 넣었습니다. 반환 완료 카드는 가상 상태 예시입니다.
 
-## License
+## 템플릿 출처
 
-MIT
+[JCodesMore/ai-website-cloner-template](https://github.com/JCodesMore/ai-website-cloner-template)에서 시작했습니다. 기준 커밋은 [`5426e0e2ec35dbc173a7a18f47a3dfe2a765313e`](https://github.com/JCodesMore/ai-website-cloner-template/commit/5426e0e2ec35dbc173a7a18f47a3dfe2a765313e)입니다. 원본 MIT 라이선스는 [LICENSE](LICENSE)에 포함되어 있습니다.

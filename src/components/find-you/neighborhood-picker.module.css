@@ -1,0 +1,105 @@
+.picker {
+  position: relative;
+  min-width: 0;
+  font-weight: 500;
+}
+
+.inputWrap {
+  position: relative;
+}
+
+.inputWrap > svg {
+  position: absolute;
+  top: 50%;
+  left: 0.7rem;
+  transform: translateY(-50%);
+  color: var(--primary);
+  pointer-events: none;
+}
+
+.inputWrap input {
+  display: block;
+  width: 100%;
+  min-height: 2.7rem;
+  border: 1px solid #cddcd7;
+  border-radius: 0.55rem;
+  background: white;
+  padding: 0.5rem 0.7rem 0.5rem 2.1rem;
+  font-size: 0.975rem;
+  text-overflow: ellipsis;
+}
+
+.inputWrap input:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.inputWrap input:disabled {
+  background: #f5f8f7;
+  color: var(--ink-muted);
+}
+
+.dropdown {
+  position: absolute;
+  z-index: 5;
+  inset-inline: 0;
+  top: calc(100% + 0.3rem);
+  border: 1px solid var(--line);
+  border-radius: 0.7rem;
+  background: white;
+  box-shadow: 0 6px 18px #12342c18;
+  overflow: hidden;
+}
+
+.options {
+  max-height: min(15rem, 40vh);
+  overflow-y: auto;
+}
+
+.options button {
+  width: 100%;
+  min-height: 2.65rem;
+  padding: 0.5rem 0.72rem;
+  text-align: start;
+  word-break: keep-all;
+}
+
+.options button[aria-selected="true"] {
+  font-weight: 750;
+}
+
+.options button:is(:hover, [data-active="true"]) {
+  background: var(--teal-soft);
+  color: var(--teal-dark);
+}
+
+.dropdown > p {
+  padding: 0.58rem 0.72rem;
+  color: var(--ink-muted);
+  font-size: 0.84rem;
+}
+
+.mobilePosition {
+  display: none;
+}
+
+@media (pointer: coarse), (max-width: 640px) {
+  .mobilePosition {
+    display: grid;
+    gap: 0.38rem;
+    margin-bottom: 0.22rem;
+  }
+
+  .mobilePosition button {
+    gap: 0.4rem;
+    justify-self: start;
+    min-height: 2.75rem;
+  }
+
+  .mobilePosition p {
+    color: var(--ink-muted);
+    font-size: 0.85rem;
+    font-weight: 500;
+    word-break: keep-all;
+  }
+}

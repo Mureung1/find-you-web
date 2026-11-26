@@ -7,21 +7,25 @@ from typing import Annotated
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
+from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
+from google.auth.exceptions import GoogleAuthError
 
-from . import matching
+from . import auth, matching
 from .db import connect, initialize, public_lost_items
 from .models import (
-    CandidateQuery, CandidateResult, Category, FoundRegistration, Location,
+    CandidateQuery, CandidateResult, Category, Coordinates, FoundRegistration, Location,
     LostRegistration, PublicLostItem, RegistrationResult,
 )
+from .neighborhoods import neighborhood_at
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     default_path = Path(__file__).parent / "data" / "find-you.sqlite3"
     app.state.db_path = Path(os.environ.get("FIND_YOU_DB_PATH", str(default_path)))
+    app.state.google_login = auth.configure_google_login()
     initialize(app.state.db_path)
     yield
 
@@ -55,10 +59,64 @@ def health(db: DB) -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/api/auth/session")
+def auth_session(request: Request, db: DB) -> dict:
+    login = request.app.state.google_login
+    if login is None:
+        return {"google_client_id": None, "origin": None, "user": None}
+    user = auth.current_user(db, request.cookies.get(auth.SESSION_COOKIE))
+    return {"google_client_id": login.client_id, "origin": login.origin, "user": dict(user) if user else None}
+
+
+@app.post("/api/auth/google")
+async def google_login(request: Request, db: DB) -> RedirectResponse:
+    login = request.app.state.google_login
+    if login is None:
+        raise HTTPException(status_code=503, detail="Google 로그인 설정을 준비 중입니다.")
+    credential = await auth.google_credential(request)
+    headers = {"Cache-Control": "no-store"}
+    try:
+        subject, name = await run_in_threadpool(auth.verify_google_identity, credential, login.client_id)
+    except (ValueError, GoogleAuthError):
+        return RedirectResponse("/login?error=google", status_code=303, headers=headers)
+
+    token = auth.start_session(db, subject, name, request.cookies.get(auth.SESSION_COOKIE))
+    response = RedirectResponse("/", status_code=303, headers=headers)
+    response.set_cookie(
+        auth.SESSION_COOKIE, token, max_age=auth.SESSION_SECONDS,
+        httponly=True, secure=login.secure_cookie, samesite="lax",
+    )
+    return response
+
+
+@app.post("/api/auth/logout", status_code=204)
+def logout(request: Request, response: Response, db: DB) -> None:
+    login = request.app.state.google_login
+    if login is None:
+        return
+    auth.require_same_origin(request, login)
+    token = request.cookies.get(auth.SESSION_COOKIE)
+    if token:
+        with db:
+            auth.end_session(db, token)
+    response.delete_cookie(auth.SESSION_COOKIE, httponly=True, secure=login.secure_cookie, samesite="lax")
+
+
 @app.get("/api/locations")
 def locations(db: DB) -> list[Location]:
     rows = db.execute("SELECT location_id, region, dong FROM locations ORDER BY region, dong, location_id")
     return [Location(**dict(row)) for row in rows]
+
+
+@app.post("/api/locations/nearby")
+def nearby_location(coordinates: Coordinates, db: DB) -> Location:
+    location_id = neighborhood_at(coordinates.latitude, coordinates.longitude)
+    row = db.execute(
+        "SELECT location_id, region, dong FROM locations WHERE location_id = ?", (location_id,),
+    ).fetchone()
+    if row is None:
+        raise HTTPException(status_code=404, detail="현재 위치의 동네를 찾지 못했어요. 동네 이름으로 검색해 주세요.")
+    return Location(**dict(row))
 
 
 @app.get("/api/lost-items")
@@ -79,31 +137,33 @@ def list_lost_items(
 
 
 @app.post("/api/lost-items", status_code=201)
-def register_lost_item(item: LostRegistration, db: DB) -> RegistrationResult:
+def register_lost_item(item: LostRegistration, request: Request, db: DB) -> RegistrationResult:
+    owner_id = auth.registration_owner(request, db)
     require_location(db, item.location_id)
     item_id = str(uuid4())
     with db:
         db.execute(
             """
-            INSERT INTO items (item_id, kind, location_id, category, title, event_date, consent_to_publish, status)
-            VALUES (?, 'lost', ?, ?, ?, ?, ?, 'searching')
+            INSERT INTO items (item_id, kind, location_id, category, title, event_date, consent_to_publish, status, owner_id)
+            VALUES (?, 'lost', ?, ?, ?, ?, ?, 'searching', ?)
             """,
-            (item_id, item.location_id, item.category, item.title, item.event_date.isoformat(), item.consent_to_publish),
+            (item_id, item.location_id, item.category, item.title, item.event_date.isoformat(), item.consent_to_publish, owner_id),
         )
     return RegistrationResult(item_id=item_id)
 
 
 @app.post("/api/found-items", status_code=201)
-def register_found_item(item: FoundRegistration, db: DB) -> RegistrationResult:
+def register_found_item(item: FoundRegistration, request: Request, db: DB) -> RegistrationResult:
+    owner_id = auth.registration_owner(request, db)
     require_location(db, item.location_id)
     item_id = str(uuid4())
     with db:
         db.execute(
             """
-            INSERT INTO items (item_id, kind, location_id, category, title, event_date, features, status)
-            VALUES (?, 'found', ?, ?, ?, ?, ?, 'held')
+            INSERT INTO items (item_id, kind, location_id, category, title, event_date, features, status, owner_id)
+            VALUES (?, 'found', ?, ?, ?, ?, ?, 'held', ?)
             """,
-            (item_id, item.location_id, item.category, item.title, item.event_date.isoformat(), item.features),
+            (item_id, item.location_id, item.category, item.title, item.event_date.isoformat(), item.features, owner_id),
         )
     return RegistrationResult(item_id=item_id)
 

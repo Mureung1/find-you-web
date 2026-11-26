@@ -198,6 +198,14 @@
   color: var(--teal-dark);
 }
 
+.nav-link.account-link {
+  flex: none;
+  min-height: 2.75rem;
+  margin-inline-start: auto;
+  padding-inline: .8rem;
+  border: 1px solid var(--line);
+}
+
 .nav-primary {
   background: var(--primary);
   color: white;

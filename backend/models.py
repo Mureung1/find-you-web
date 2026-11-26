@@ -2,7 +2,7 @@ from datetime import date, datetime, timedelta, timezone
 from enum import StrEnum
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, StringConstraints, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 
 
 class Category(StrEnum):
@@ -34,6 +34,13 @@ class Location(BaseModel):
     location_id: str
     region: str
     dong: str
+
+
+class Coordinates(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    latitude: Annotated[float, Field(strict=True, ge=-90, le=90)]
+    longitude: Annotated[float, Field(strict=True, ge=-180, le=180)]
 
 
 class CandidateQuery(BaseModel):

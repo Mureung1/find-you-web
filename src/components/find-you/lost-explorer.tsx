@@ -4,8 +4,8 @@ import { CalendarDays, ChevronDown, LayoutGrid, MapPin, PackageSearch, RotateCcw
 import Image from "next/image";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useLocations } from "@/hooks/use-locations";
-import { categories, type Category, type Location, type LostItem, requestApi } from "@/lib/find-you";
-import { NeighborhoodSelect, regionPrefix } from "./select-fields";
+import { categories, type Category, type LostItem, requestApi } from "@/lib/find-you";
+import { NeighborhoodPicker, regionPrefix } from "./neighborhood-picker";
 import styles from "./lost-explorer.module.css";
 
 const defaults = { q: "", region: "", location_id: "", category: "" as Category | "" };
@@ -41,16 +41,13 @@ function LostCard({ item }: { item: LostItem }) {
   );
 }
 
-export function LostExplorer({ initialItems, initialLocations }: {
-  initialItems: LostItem[] | null;
-  initialLocations: Location[] | null;
-}) {
+export function LostExplorer({ initialItems }: { initialItems: LostItem[] | null }) {
   const [keyword, setKeyword] = useState("");
   const [request, setRequest] = useState<SearchRequest>();
   const [result, setResult] = useState<SearchResult>();
   const [categoriesOpen, setCategoriesOpen] = useState(true);
   const keywordInput = useRef<HTMLInputElement>(null);
-  const { locations, loading: locationsLoading, error: locationsError, retry: retryLocations } = useLocations(initialLocations);
+  const { locations, loading: locationsLoading, error: locationsError, retry: retryLocations } = useLocations();
   const filters = request?.filters ?? defaults;
 
   useEffect(() => {
@@ -111,9 +108,9 @@ export function LostExplorer({ initialItems, initialLocations }: {
       <form className={styles.searchBar} role="search" aria-label="공개 분실글" onSubmit={search}>
         <div className={styles.neighborhood}>
           <label className="sr-only" htmlFor="filter-neighborhood">동네</label>
-          <NeighborhoodSelect id="filter-neighborhood" value={neighborhood} locations={locations}
+          <NeighborhoodPicker id="filter-neighborhood" value={neighborhood} locations={locations}
             placeholder={locationsLoading ? "동네 불러오는 중" : "전체 동네"} includeRegions
-            disabled={locationsLoading || locationsError} onChange={(event) => changeNeighborhood(event.target.value)} />
+            disabled={locationsLoading || locationsError} onChange={changeNeighborhood} />
         </div>
         <div className={styles.searchKeyword}>
           <Search size={19} aria-hidden />

@@ -4,6 +4,7 @@ from contextlib import closing
 from pathlib import Path
 
 from .models import CATEGORY_LABELS, Category
+from .neighborhoods import seed_neighborhoods
 from .seed import migrate_demo_locations, seed_demo
 
 
@@ -13,6 +14,20 @@ CREATE TABLE IF NOT EXISTS locations (
     region TEXT NOT NULL,
     dong TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS users (
+    user_id TEXT PRIMARY KEY NOT NULL,
+    google_sub TEXT NOT NULL UNIQUE,
+    display_name TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+    token_hash TEXT PRIMARY KEY NOT NULL,
+    user_id TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    expires_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS sessions_expiry ON sessions(expires_at);
 
 CREATE TABLE IF NOT EXISTS items (
     item_id TEXT PRIMARY KEY NOT NULL,
@@ -24,6 +39,7 @@ CREATE TABLE IF NOT EXISTS items (
     features TEXT,
     consent_to_publish INTEGER NOT NULL DEFAULT 0 CHECK (consent_to_publish IN (0, 1)),
     status TEXT NOT NULL,
+    owner_id TEXT REFERENCES users(user_id),
     CHECK (
         (kind = 'lost' AND features IS NULL AND status IN ('searching', 'returned')) OR
         (kind = 'found' AND features IS NOT NULL AND consent_to_publish = 0 AND status IN ('held', 'returned'))
@@ -69,6 +85,9 @@ def initialize(path: Path) -> None:
         legacy = "place" in columns
         if legacy:
             db.execute("ALTER TABLE locations RENAME COLUMN place TO dong")
+        if not any(row["name"] == "owner_id" for row in db.execute("PRAGMA table_info(items)")):
+            db.execute("ALTER TABLE items ADD COLUMN owner_id TEXT REFERENCES users(user_id)")
+        seed_neighborhoods(db)
         seed_demo(db)
         if legacy:
             migrate_demo_locations(db)

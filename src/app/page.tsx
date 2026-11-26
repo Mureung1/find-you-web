@@ -1,6 +1,6 @@
 import { LostExplorer } from "@/components/find-you/lost-explorer";
 import { backendOrigin } from "@/lib/backend-origin";
-import type { Location, LostItem } from "@/lib/find-you";
+import type { LostItem } from "@/lib/find-you";
 
 async function loadInitialData<T>(path: string): Promise<T | null> {
   try {
@@ -15,9 +15,6 @@ async function loadInitialData<T>(path: string): Promise<T | null> {
 }
 
 export default async function Home() {
-  const [initialLocations, initialItems] = await Promise.all([
-    loadInitialData<Location[]>("locations"),
-    loadInitialData<LostItem[]>("lost-items"),
-  ]);
-  return <LostExplorer initialItems={initialItems} initialLocations={initialLocations} />;
+  const initialItems = await loadInitialData<LostItem[]>("lost-items");
+  return <LostExplorer initialItems={initialItems} />;
 }

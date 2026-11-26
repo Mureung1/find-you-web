@@ -51,6 +51,7 @@ UTF-8 JSON 배열입니다. 테스트 질의는 원본 공간의 `location_code`
 ## 동네와 물건 ID 연결
 
 - 서비스 동네의 기준 키는 `location_id`입니다. 모든 동네는 상위 지역명 `region`과 동 이름 `dong`을 가집니다. 같은 동 이름이라도 상위 지역이 다르면 별도의 ID를 부여합니다.
+- 전국 법정 읍·면·동은 행정표준코드의 10자리 문자열을 키로 사용합니다. 기존 서울 데모 동네 5곳은 저장된 게시글과의 호환성을 위해 기존 키를 유지합니다. `POST /api/locations/nearby`는 브라우저가 허용한 위도·경도로 일치하는 동네를 찾고 `location_id`, `region`, `dong`을 반환합니다. GPS 좌표는 매칭 모듈에 전달하거나 저장하지 않습니다.
 - 가져오기는 데이터셋별 명시적 매핑 `(dataset_id, location_code) → location_id`를 사용합니다. 가상 예시는 `MAPO-SEONGSAN → mapo-seongsan`, `MAPO-YEONNAM → mapo-yeonnam`, `MAPO-SANGAM → mapo-sangam`입니다. 미등록 코드는 검토 대기 상태로 두고 담당자가 동네 목록과 매핑을 확인합니다.
 - 최초 가져오기에서 서비스가 `item_id`를 발급하고 `(dataset_id, record_id) → item_id`를 내부 매핑에 저장합니다. 같은 데이터셋·원본 ID를 다시 받으면 기존 행을 갱신합니다. 평가 때도 이 매핑으로 정답 ID를 변환합니다. 검색 인덱스와 내부 호출에는 서비스 `item_id`를 사용합니다.
 

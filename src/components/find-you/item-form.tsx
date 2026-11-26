@@ -2,10 +2,14 @@
 
 import { CircleCheck, LocateFixed, Plus, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useCallback, useState } from "react";
 import { useLocations } from "@/hooks/use-locations";
+import { useNeighborhoodPosition } from "@/hooks/use-neighborhood-position";
+import { useSession } from "@/hooks/use-session";
 import { ApiError, postApi } from "@/lib/find-you";
-import { CategorySelect, NeighborhoodSelect } from "./select-fields";
+import { NeighborhoodPicker } from "./neighborhood-picker";
+import { CategorySelect } from "./select-fields";
+import neighborhoodStyles from "./neighborhood-picker.module.css";
 
 const modes = {
   lost: { title: "분실물 등록", icon: Plus, intro: "잃어버린 물건과 마지막으로 본 동네를 알려 주세요.", action: "분실물 등록", endpoint: "lost-items" },
@@ -20,8 +24,18 @@ export function ItemForm({ mode }: { mode: keyof typeof modes }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [outcome, setOutcome] = useState<Outcome>();
+  const [expiredSession, setExpiredSession] = useState(false);
+  const [locationId, setLocationId] = useState("");
   const isMatch = mode === "match";
   const isLost = mode === "lost";
+  const session = useSession(!isMatch);
+  const loginRequired = expiredSession || Boolean(session?.google_client_id && !session.user);
+  const selectLocation = useCallback((value: string) => {
+    setLocationId(value);
+    setError("");
+    setOutcome(undefined);
+  }, []);
+  const position = useNeighborhoodPosition(isLost && session !== undefined && !loginRequired, selectLocation);
   const settings = modes[mode];
   const Icon = settings.icon;
 
@@ -39,11 +53,12 @@ export function ItemForm({ mode }: { mode: keyof typeof modes }) {
     setError("");
     setOutcome(undefined);
 
+    if (!locationId) return setError("동네 검색 결과에서 동네를 선택해 주세요.");
     if (!isMatch && title.length < 2) return setError("물건 이름을 두 글자 이상 입력해 주세요.");
     if (!isLost && features.length < 2) return setError("물건 특징을 두 글자 이상 입력해 주세요.");
     if (!isMatch && eventDate > today) return setError("오늘 또는 이전 날짜를 선택해 주세요.");
 
-    const scope = { location_id: fields.get("location_id"), category: fields.get("category") };
+    const scope = { location_id: locationId, category: fields.get("category") };
     setBusy(true);
     try {
       if (isMatch) {
@@ -60,6 +75,10 @@ export function ItemForm({ mode }: { mode: keyof typeof modes }) {
         setOutcome({ message: isLost && consent ? "분실글을 공개 목록에 등록했어요." : "비공개로 등록했어요." });
       }
     } catch (failure) {
+      if (failure instanceof ApiError && failure.status === 401) {
+        setExpiredSession(true);
+        return;
+      }
       setError(failure instanceof ApiError && failure.status === 422
         ? failure.message
         : isMatch ? "후보 확인에 실패했습니다. 다시 시도해 주세요." : "등록에 실패했습니다. 다시 시도해 주세요.");
@@ -80,7 +99,14 @@ export function ItemForm({ mode }: { mode: keyof typeof modes }) {
         <p>서울 마포구 성산동 · 생활용품 · 손잡이에 별 스티커</p>
         <p>위 조건은 후보가 있어요. 동네를 연남동으로 바꾸면 후보가 없어요.</p>
       </aside>}
-      {!isMatch && outcome ? (
+      {!isMatch && session === undefined ? (
+        <p role="status">로그인 상태를 확인하고 있어요.</p>
+      ) : loginRequired ? (
+        <section className="form-panel">
+          <p>Google 계정으로 로그인한 뒤 등록할 수 있어요.</p>
+          <div><Link href="/login" className="primary-button">로그인</Link></div>
+        </section>
+      ) : !isMatch && outcome ? (
         <section className="form-panel completion" role="status">
           <CircleCheck size={31} aria-hidden />
           <p>{outcome.message}</p>
@@ -90,10 +116,23 @@ export function ItemForm({ mode }: { mode: keyof typeof modes }) {
         <form className="form-panel" onSubmit={submit} onChange={() => { setError(""); setOutcome(undefined); }} aria-busy={busy}>
           <fieldset className="form-fields" disabled={busy}>
             <div className="field-grid">
-              <label className="form-field">동네
-                <NeighborhoodSelect name="location_id" locations={locations} required disabled={loading || locationsError}
-                  placeholder={loading ? "동네 불러오는 중" : "동네 선택"} />
-              </label>
+              <div className="form-field">
+                <label htmlFor="item-neighborhood">동네</label>
+                {isLost && (
+                  <div className={neighborhoodStyles.mobilePosition}>
+                    <button type="button" className="secondary-button"
+                      disabled={position.pending || loading || locationsError} onClick={position.find}>
+                      <LocateFixed size={16} aria-hidden />현재 위치로 동네 설정
+                    </button>
+                    {position.message && <p role="status">{position.message}</p>}
+                  </div>
+                )}
+                <NeighborhoodPicker id="item-neighborhood" name="location_id" locations={locations}
+                  value={locationId} required disabled={loading || locationsError}
+                  onEdit={isLost ? position.cancel : undefined}
+                  onChange={(value) => { if (isLost) position.cancel(); selectLocation(value); }}
+                  placeholder={loading ? "동네 불러오는 중" : "예: 마포구 성산동"} />
+              </div>
               <label className="form-field">물건 종류
                 <CategorySelect name="category" placeholder="물건 종류 선택" required />
               </label>

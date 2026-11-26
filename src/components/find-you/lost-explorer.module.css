@@ -74,27 +74,17 @@
   background: #f8fbf9;
 }
 
-.neighborhood select {
+.neighborhood input[role="combobox"] {
   min-height: 2.9rem;
   border-color: transparent;
   border-radius: 0.56rem;
   background: #e7f4ed;
   color: var(--teal-dark);
   font-weight: 750;
-  cursor: pointer;
 }
 
-.neighborhood select:hover:not(:disabled) {
+.neighborhood input[role="combobox"]:hover:not(:disabled) {
   background: #dceddf;
-}
-
-.neighborhood select :is(option, optgroup) {
-  background: white;
-  color: var(--foreground);
-}
-
-.neighborhood :global(.select-field) > svg {
-  color: var(--teal-dark);
 }
 
 .locationError {
@@ -385,7 +375,7 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .neighborhood select {
+  .neighborhood input[role="combobox"] {
     min-height: 2.7rem;
   }
 

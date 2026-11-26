@@ -1,0 +1,54 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      FIND_YOU_LIVE: "1"
+      FIND_YOU_AUTH_ORIGIN: https://${FIND_YOU_STAGING_DOMAIN:?Set a staging domain}
+      FIND_YOU_GOOGLE_CLIENT_ID: ${FIND_YOU_GOOGLE_CLIENT_ID:?Set the Google OAuth Client ID}
+      FIND_YOU_ADMIN_USER_IDS: ${FIND_YOU_ADMIN_USER_IDS:-}
+    volumes:
+      - database:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/api/health', timeout=3).read()"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+      args:
+        FIND_YOU_API_ORIGIN: http://api:8000
+    environment:
+      FIND_YOU_API_ORIGIN: http://api:8000
+      NEXT_TELEMETRY_DISABLED: "1"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  https:
+    image: caddy:2-alpine
+    environment:
+      FIND_YOU_STAGING_DOMAIN: ${FIND_YOU_STAGING_DOMAIN:?Set a staging domain}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile.staging:/etc/caddy/Caddyfile:ro
+      - certificates:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+    restart: unless-stopped
+
+volumes:
+  database:
+  certificates:
+  caddy_config:

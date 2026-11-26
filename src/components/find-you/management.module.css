@@ -1,0 +1,124 @@
+.page {
+  max-width: 56rem;
+}
+
+.section {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+}
+
+.section h2 {
+  font-size: 1.2rem;
+  font-weight: 850;
+}
+
+.list {
+  display: grid;
+  gap: 0.8rem;
+  list-style: none;
+}
+
+.panel {
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.panel h3 {
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.details {
+  display: grid;
+  gap: 0.45rem;
+  overflow-wrap: anywhere;
+}
+
+.details p {
+  white-space: pre-wrap;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: 0.55rem;
+}
+
+.inlineForm {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.inlineForm fieldset {
+  display: grid;
+  min-width: 0;
+  gap: 0.75rem;
+}
+
+.photoList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.photoList li {
+  display: grid;
+  gap: 0.3rem;
+  width: 7rem;
+}
+
+.photoList img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  object-fit: cover;
+}
+
+.upload {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.55rem;
+}
+
+.upload label {
+  display: grid;
+  min-width: 0;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+}
+
+.upload input {
+  max-width: 100%;
+}
+
+.candidate {
+  display: grid;
+  min-width: 0;
+  gap: 0.4rem;
+  padding: 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  overflow-wrap: anywhere;
+}
+
+.candidate label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 750;
+}
+
+.claimForm {
+  margin-top: 1rem;
+}

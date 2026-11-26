@@ -129,11 +129,27 @@ def require_same_origin(request: Request, login: GoogleLogin) -> None:
 
 
 def registration_owner(request: Request, db: sqlite3.Connection) -> str | None:
-    login = request.app.state.google_login
-    if login is None:
+    if request.app.state.google_login is None:
         return None
+    return require_user(request, db, write=True)["user_id"]
+
+
+def require_user(request: Request, db: sqlite3.Connection, *, write: bool = False) -> sqlite3.Row:
+    login = request.app.state.google_login
     user = current_user(db, request.cookies.get(SESSION_COOKIE))
-    if user is None:
-        raise HTTPException(status_code=401, detail="로그인한 뒤 등록해 주세요.")
-    require_same_origin(request, login)
-    return user["user_id"]
+    if login is None or user is None:
+        raise HTTPException(status_code=401, detail="Google 계정으로 로그인해 주세요.")
+    if write:
+        require_same_origin(request, login)
+    return user
+
+
+def is_admin(request: Request, user_id: str) -> bool:
+    return user_id in request.app.state.admin_user_ids
+
+
+def require_admin(request: Request, db: sqlite3.Connection, *, write: bool = False) -> str:
+    user_id = require_user(request, db, write=write)["user_id"]
+    if not is_admin(request, user_id):
+        raise HTTPException(status_code=403, detail="담당자만 소유 확인 요청을 검토할 수 있어요.")
+    return user_id

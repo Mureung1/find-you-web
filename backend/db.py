@@ -54,6 +54,39 @@ CREATE TABLE IF NOT EXISTS item_photos (
     PRIMARY KEY (item_id, position)
 );
 
+CREATE TABLE IF NOT EXISTS claims (
+    claim_id TEXT PRIMARY KEY NOT NULL,
+    claimant_id TEXT NOT NULL REFERENCES users(user_id),
+    location_id TEXT NOT NULL REFERENCES locations(location_id),
+    category TEXT NOT NULL,
+    features TEXT NOT NULL,
+    proof TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'returned')),
+    created_at TEXT NOT NULL,
+    approved_item_id TEXT REFERENCES items(item_id) ON DELETE SET NULL,
+    reviewer_id TEXT REFERENCES users(user_id),
+    reply TEXT,
+    CHECK (status != 'approved' OR approved_item_id IS NOT NULL)
+);
+
+CREATE TABLE IF NOT EXISTS claim_candidates (
+    claim_id TEXT NOT NULL REFERENCES claims(claim_id) ON DELETE CASCADE,
+    item_id TEXT NOT NULL REFERENCES items(item_id) ON DELETE CASCADE,
+    PRIMARY KEY (claim_id, item_id)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS approved_claim_item ON claims(approved_item_id) WHERE status = 'approved';
+CREATE INDEX IF NOT EXISTS claims_by_user ON claims(claimant_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS claims_by_status ON claims(status, created_at);
+CREATE INDEX IF NOT EXISTS claim_candidates_by_item ON claim_candidates(item_id);
+
+CREATE TABLE IF NOT EXISTS imported_items (
+    dataset_id TEXT NOT NULL,
+    record_id TEXT NOT NULL,
+    item_id TEXT NOT NULL UNIQUE REFERENCES items(item_id) ON DELETE CASCADE,
+    PRIMARY KEY (dataset_id, record_id)
+);
+
 CREATE INDEX IF NOT EXISTS public_items_date ON items(event_date DESC, item_id)
     WHERE kind = 'lost' AND consent_to_publish = 1;
 
@@ -76,7 +109,7 @@ def connect(path: Path) -> sqlite3.Connection:
     return db
 
 
-def initialize(path: Path) -> None:
+def initialize(path: Path, *, with_demo: bool = True) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with closing(connect(path)) as db, db:
         db.executescript(SCHEMA)
@@ -87,10 +120,12 @@ def initialize(path: Path) -> None:
             db.execute("ALTER TABLE locations RENAME COLUMN place TO dong")
         if not any(row["name"] == "owner_id" for row in db.execute("PRAGMA table_info(items)")):
             db.execute("ALTER TABLE items ADD COLUMN owner_id TEXT REFERENCES users(user_id)")
+        db.execute("CREATE INDEX IF NOT EXISTS items_by_owner ON items(owner_id, event_date DESC)")
         seed_neighborhoods(db)
-        seed_demo(db)
         if legacy:
             migrate_demo_locations(db)
+        if with_demo:
+            seed_demo(db)
 
 
 def public_lost_items(

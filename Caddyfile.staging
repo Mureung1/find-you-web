@@ -1,0 +1,3 @@
+{$FIND_YOU_STAGING_DOMAIN} {
+    reverse_proxy web:3000
+}

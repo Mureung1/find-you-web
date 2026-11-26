@@ -106,7 +106,8 @@ export function GoogleLoginPanel({ googleError }: { googleError: boolean }) {
           <p><strong>{session.user.display_name}</strong> 계정으로 로그인했어요.</p>
           {logoutError && <p className="input-error" role="alert">로그아웃에 실패했습니다. 다시 시도해 주세요.</p>}
           <div className="form-actions">
-            <Link href="/" className="secondary-button">분실글 탐색</Link>
+            <Link href="/my-items" className="secondary-button">내 글</Link>
+            {session.user.is_admin && <Link href="/claims/review" className="secondary-button">소유 확인 검토</Link>}
             <button className="primary-button" type="button" disabled={logoutPending} onClick={logout}>로그아웃</button>
           </div>
         </>

@@ -17,6 +17,7 @@ dist
 # Environment files (pass via docker-compose env_file or runtime env vars)
 .env
 .env.local
+.env.*
 .env.*.local
 
 # Editor / OS
@@ -29,7 +30,9 @@ Thumbs.db
 
 # Agent / AI tool configs (not needed at runtime)
 .agents
+.aws
 .claude
+.codex
 .cursor
 .opencode
 AGENTS.md
@@ -38,6 +41,10 @@ CLAUDE.md
 # Docs / research (large, not needed at runtime)
 docs
 scripts
+temp
+.venv
+backend/data
+**/__pycache__
 
 # Docker files themselves (no need to copy into image)
 Dockerfile

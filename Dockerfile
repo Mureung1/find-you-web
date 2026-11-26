@@ -47,6 +47,8 @@ COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 
 ENV NODE_ENV=production
+ARG FIND_YOU_API_ORIGIN=http://127.0.0.1:8000
+ENV FIND_YOU_API_ORIGIN=${FIND_YOU_API_ORIGIN}
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry

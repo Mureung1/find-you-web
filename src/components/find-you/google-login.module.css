@@ -30,6 +30,11 @@
   width: 100%;
 }
 
+.panel :global(.form-actions) {
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 .unavailableButton:disabled {
   width: min(100%, 240px);
   color: var(--ink-muted);

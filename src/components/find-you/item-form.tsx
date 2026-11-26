@@ -7,6 +7,8 @@ import { useLocations } from "@/hooks/use-locations";
 import { useNeighborhoodPosition } from "@/hooks/use-neighborhood-position";
 import { useSession } from "@/hooks/use-session";
 import { ApiError, postApi } from "@/lib/find-you";
+import type { ClaimQuery } from "@/lib/management";
+import { ClaimForm } from "./claim-form";
 import { NeighborhoodPicker } from "./neighborhood-picker";
 import { CategorySelect } from "./select-fields";
 import neighborhoodStyles from "./neighborhood-picker.module.css";
@@ -17,7 +19,7 @@ const modes = {
   match: { title: "특징으로 찾기", icon: LocateFixed, intro: "분실한 동네와 물건 종류, 기억나는 특징으로 후보가 있는지 확인할 수 있어요.", action: "후보 확인", endpoint: "candidates/check" },
 };
 
-type Outcome = { message: string; candidate?: boolean };
+type Outcome = { message: string; candidate?: boolean; query?: ClaimQuery; itemId?: string };
 
 export function ItemForm({ mode }: { mode: keyof typeof modes }) {
   const { locations, loading, error: locationsError, retry } = useLocations();
@@ -28,8 +30,8 @@ export function ItemForm({ mode }: { mode: keyof typeof modes }) {
   const [locationId, setLocationId] = useState("");
   const isMatch = mode === "match";
   const isLost = mode === "lost";
-  const session = useSession(!isMatch);
-  const loginRequired = expiredSession || Boolean(session?.google_client_id && !session.user);
+  const session = useSession();
+  const loginRequired = !isMatch && (expiredSession || Boolean(session?.google_client_id && !session.user));
   const selectLocation = useCallback((value: string) => {
     setLocationId(value);
     setError("");
@@ -58,21 +60,23 @@ export function ItemForm({ mode }: { mode: keyof typeof modes }) {
     if (!isLost && features.length < 2) return setError("물건 특징을 두 글자 이상 입력해 주세요.");
     if (!isMatch && eventDate > today) return setError("오늘 또는 이전 날짜를 선택해 주세요.");
 
-    const scope = { location_id: locationId, category: fields.get("category") };
+    const scope = { location_id: locationId, category: String(fields.get("category") ?? "") };
     setBusy(true);
     try {
       if (isMatch) {
-        const { has_candidate } = await postApi<{ has_candidate: boolean }>(settings.endpoint, { ...scope, features });
+        const query = { ...scope, features };
+        const { has_candidate } = await postApi<{ has_candidate: boolean }>(settings.endpoint, query);
         setOutcome({
           candidate: has_candidate,
+          query: has_candidate ? query : undefined,
           message: has_candidate ? "입력한 조건에 맞는 후보가 있어요." : "입력한 조건에 맞는 후보가 없어요.",
         });
       } else {
         const details = { ...scope, title, event_date: eventDate };
-        await postApi<{ item_id: string }>(settings.endpoint, isLost
+        const { item_id } = await postApi<{ item_id: string }>(settings.endpoint, isLost
           ? { ...details, consent_to_publish: consent }
           : { ...details, features });
-        setOutcome({ message: isLost && consent ? "분실글을 공개 목록에 등록했어요." : "비공개로 등록했어요." });
+        setOutcome({ itemId: item_id, message: isLost && consent ? "분실글을 공개 목록에 등록했어요." : "비공개로 등록했어요." });
       }
     } catch (failure) {
       if (failure instanceof ApiError && failure.status === 401) {
@@ -94,7 +98,7 @@ export function ItemForm({ mode }: { mode: keyof typeof modes }) {
         <h1>{settings.title}</h1>
         <p>{settings.intro}</p>
       </div>
-      {isMatch && <aside className="demo-panel">
+      {isMatch && session?.demo_mode && <aside className="demo-panel">
         <strong>데모 검색</strong>
         <p>서울 마포구 성산동 · 생활용품 · 손잡이에 별 스티커</p>
         <p>위 조건은 후보가 있어요. 동네를 연남동으로 바꾸면 후보가 없어요.</p>
@@ -110,7 +114,12 @@ export function ItemForm({ mode }: { mode: keyof typeof modes }) {
         <section className="form-panel completion" role="status">
           <CircleCheck size={31} aria-hidden />
           <p>{outcome.message}</p>
-          <Link href="/" className="primary-button">분실글 탐색</Link>
+          <div className="form-actions">
+            {session?.user && outcome.itemId && <Link className="primary-button" href={`/my-items#${outcome.itemId}`}>
+              {isLost ? "내 글 보기" : "내 글에서 사진 추가"}
+            </Link>}
+            <Link href="/" className="secondary-button">분실글 탐색</Link>
+          </div>
         </section>
       ) : (
         <form className="form-panel" onSubmit={submit} onChange={() => { setError(""); setOutcome(undefined); }} aria-busy={busy}>
@@ -160,7 +169,7 @@ export function ItemForm({ mode }: { mode: keyof typeof modes }) {
           </fieldset>
           {error && <p role="alert" className="input-error">{error}</p>}
           {isMatch && outcome && <div className={`match-outcome${outcome.candidate ? " has-candidate" : ""}`} role="status">
-            <strong>데모 결과</strong><p>{outcome.message}</p>
+            <strong>후보 확인 결과</strong><p>{outcome.message}</p>
           </div>}
           <div className="form-actions">
             <Link className="secondary-button" href="/">분실글 탐색</Link>
@@ -170,6 +179,7 @@ export function ItemForm({ mode }: { mode: keyof typeof modes }) {
           </div>
         </form>
       )}
+      {isMatch && outcome?.query && <ClaimForm query={outcome.query} />}
     </main>
   );
 }

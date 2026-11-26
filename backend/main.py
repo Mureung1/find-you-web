@@ -1,24 +1,26 @@
 import os
-import sqlite3
-from collections.abc import Iterator
-from contextlib import asynccontextmanager, closing
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
+from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.concurrency import run_in_threadpool
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
 from google.auth.exceptions import GoogleAuthError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import auth, matching
-from .db import connect, initialize, public_lost_items
+from . import auth, claims, management, matching
+from .db import initialize, public_lost_items
+from .dependencies import DB, require_location
 from .models import (
     CandidateQuery, CandidateResult, Category, Coordinates, FoundRegistration, Location,
     LostRegistration, PublicLostItem, RegistrationResult,
 )
 from .neighborhoods import neighborhood_at
+from .semantic import TextEncoder
 
 
 @asynccontextmanager
@@ -26,31 +28,38 @@ async def lifespan(app: FastAPI):
     default_path = Path(__file__).parent / "data" / "find-you.sqlite3"
     app.state.db_path = Path(os.environ.get("FIND_YOU_DB_PATH", str(default_path)))
     app.state.google_login = auth.configure_google_login()
-    initialize(app.state.db_path)
+    app.state.admin_user_ids = {
+        value.strip() for value in os.environ.get("FIND_YOU_ADMIN_USER_IDS", "").split(",") if value.strip()
+    }
+    live = os.environ.get("FIND_YOU_LIVE") == "1"
+    app.state.demo_mode = not live
+    if live and (app.state.google_login is None or not app.state.google_login.secure_cookie):
+        raise ValueError("FIND_YOU_LIVE=1 requires Google login and an HTTPS origin")
+    initialize(app.state.db_path, with_demo=not live)
+    text_model_path = os.environ.get("FIND_YOU_TEXT_MODEL_PATH", "").strip()
+    app.state.text_encoder = TextEncoder(Path(text_model_path)) if text_model_path else None
     yield
 
 
 app = FastAPI(title="Find you API", lifespan=lifespan)
-
-
-def database(request: Request, response: Response) -> Iterator[sqlite3.Connection]:
-    response.headers["Cache-Control"] = "no-store"
-    with closing(connect(request.app.state.db_path)) as db:
-        yield db
-
-
-DB = Annotated[sqlite3.Connection, Depends(database)]
+app.include_router(management.router)
+app.include_router(claims.router)
 
 
 @app.exception_handler(RequestValidationError)
 async def invalid_request(_request: Request, exc: RequestValidationError) -> JSONResponse:
     fields = [{"field": error["loc"][-1], "code": error["type"]} for error in exc.errors()]
-    return JSONResponse(status_code=422, content={"detail": "입력 항목을 확인해 주세요.", "fields": fields})
+    return JSONResponse(
+        status_code=422, headers={"Cache-Control": "no-store"},
+        content={"detail": "입력 항목을 확인해 주세요.", "fields": fields},
+    )
 
 
-def require_location(db: sqlite3.Connection, location_id: str) -> None:
-    if db.execute("SELECT 1 FROM locations WHERE location_id = ?", (location_id,)).fetchone() is None:
-        raise HTTPException(status_code=422, detail="목록에 있는 동네를 선택해 주세요.")
+@app.exception_handler(StarletteHTTPException)
+async def uncacheable_http_error(request: Request, exc: StarletteHTTPException) -> Response:
+    response = await http_exception_handler(request, exc)
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.get("/api/health")
@@ -63,9 +72,10 @@ def health(db: DB) -> dict[str, str]:
 def auth_session(request: Request, db: DB) -> dict:
     login = request.app.state.google_login
     if login is None:
-        return {"google_client_id": None, "origin": None, "user": None}
+        return {"google_client_id": None, "origin": None, "user": None, "demo_mode": request.app.state.demo_mode}
     user = auth.current_user(db, request.cookies.get(auth.SESSION_COOKIE))
-    return {"google_client_id": login.client_id, "origin": login.origin, "user": dict(user) if user else None}
+    account = {**dict(user), "is_admin": auth.is_admin(request, user["user_id"])} if user else None
+    return {"google_client_id": login.client_id, "origin": login.origin, "user": account, "demo_mode": request.app.state.demo_mode}
 
 
 @app.post("/api/auth/google")
@@ -169,6 +179,6 @@ def register_found_item(item: FoundRegistration, request: Request, db: DB) -> Re
 
 
 @app.post("/api/candidates/check")
-def check_candidates(query: CandidateQuery, db: DB) -> CandidateResult:
+def check_candidates(query: CandidateQuery, request: Request, db: DB) -> CandidateResult:
     require_location(db, query.location_id)
-    return CandidateResult(has_candidate=matching.has_candidate(db, query))
+    return CandidateResult(has_candidate=matching.has_candidate(db, query, encoder=request.app.state.text_encoder))

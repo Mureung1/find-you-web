@@ -7,7 +7,8 @@ import { requestApi } from "@/lib/find-you";
 type Session = {
   google_client_id: string | null;
   origin: string | null;
-  user: { user_id: string; display_name: string } | null;
+  user: { user_id: string; display_name: string; is_admin: boolean } | null;
+  demo_mode: boolean;
 };
 
 export function useSession(enabled = true) {

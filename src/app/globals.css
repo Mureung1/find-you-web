@@ -217,10 +217,6 @@
 }
 
 
-.explorer {
-  padding-block: 2.45rem 4.5rem;
-}
-
 .primary-button, .secondary-button {
   display: inline-flex;
   min-height: 2.65rem;
@@ -333,130 +329,6 @@ a:focus-visible, button:focus-visible, select:focus-visible, .form-field :is(inp
 
 .select-icon {
   left: .66rem;
-}
-
-
-.results-heading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: .8rem;
-  margin-bottom: .75rem;
-}
-
-.results-title {
-  min-width: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: .55rem;
-}
-
-.results-title h2 {
-  font-weight: 850;
-  font-size: 1.5rem;
-  letter-spacing: -.06em;
-  overflow-wrap: anywhere;
-}
-
-.result-count {
-  color: var(--primary);
-  font-size: .92rem;
-  font-weight: 750;
-}
-
-.sort-label {
-  color: var(--ink-muted);
-  font-size: .875rem;
-  white-space: nowrap;
-}
-
-.result-list {
-  display: grid;
-}
-
-.lost-card {
-  display: grid;
-  gap: .62rem;
-  padding: .48rem;
-  border: 1px solid var(--line);
-  border-radius: .95rem;
-  background: white;
-}
-
-.item-content {
-  padding: .2rem .54rem .62rem;
-}
-
-.item-category {
-  color: var(--ink-muted);
-  font-size: .875rem;
-  font-weight: 700;
-}
-
-.item-content h3 {
-  margin-top: .06rem;
-  font-size: 1.16rem;
-  line-height: 1.35;
-  font-weight: 850;
-  letter-spacing: -.035em;
-  overflow-wrap: anywhere;
-}
-
-.item-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .22rem 1rem;
-  margin-top: .32rem;
-  color: var(--ink-muted);
-  font-size: .9rem;
-}
-
-.item-meta span {
-  display: flex;
-  align-items: baseline;
-  gap: .3rem;
-  word-break: keep-all;
-  overflow-wrap: anywhere;
-}
-
-.item-meta svg {
-  flex: none;
-  align-self: center;
-}
-
-.item-status {
-  align-self: start;
-  border-radius: 99rem;
-  padding: .27rem .58rem;
-  font-size: .875rem;
-  font-weight: 750;
-  white-space: nowrap;
-}
-
-.item-status.searching {
-  background: #e5f6ee;
-  color: #086051;
-}
-
-.item-status.returned {
-  background: #edf1f0;
-  color: #405b54;
-}
-
-.result-message {
-  display: grid;
-  justify-items: center;
-  gap: .7rem;
-  padding: 2.6rem 1rem;
-  border: 1px solid var(--line);
-  border-radius: .95rem;
-  color: var(--ink-muted);
-  text-align: center;
-}
-
-.result-message svg {
-  color: var(--primary);
 }
 
 
@@ -623,24 +495,8 @@ a:focus-visible, button:focus-visible, select:focus-visible, .form-field :is(inp
     height: .85rem;
     flex: none;
   }
-  .explorer, .form-page {
+  .form-page {
     padding-top: 1.2rem;
-  }
-  .results-title h2 {
-    font-size: 1.25rem;
-  }
-  .lost-card {
-    gap: .52rem;
-  }
-  .item-content h3 {
-    font-size: 1rem;
-  }
-  .item-meta {
-    display: grid;
-    font-size: .875rem;
-  }
-  .item-status {
-    padding-inline: .42rem;
   }
   .form-panel {
     padding: .9rem;

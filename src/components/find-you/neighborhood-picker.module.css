@@ -79,6 +79,40 @@
   font-size: 0.84rem;
 }
 
+.picker[data-compact] .inputWrap input {
+  min-height: 1.75rem;
+  padding: 0.25rem 1.45rem 0.25rem 1.95rem;
+  border-color: var(--line);
+  border-radius: 99rem;
+  background: var(--home-soft);
+  color: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
+}
+
+.picker[data-compact] .inputWrap input::placeholder {
+  color: inherit;
+  opacity: 1;
+}
+
+.picker[data-compact] .inputWrap input:hover:not(:disabled) {
+  background: var(--home-neutral);
+}
+
+.picker[data-compact] .inputWrap > svg {
+  width: 0.875rem;
+}
+
+.inputWrap > .indicator {
+  right: 0.55rem;
+  left: auto;
+  color: var(--ink-muted);
+}
+
+.picker[data-compact] .dropdown {
+  width: max(100%, min(18rem, 58vw));
+}
+
 .mobilePosition {
   display: none;
 }

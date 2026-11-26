@@ -1,8 +1,13 @@
+"use client";
+
 import { LocateFixed, MapPin, Plus, ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { AccountLink } from "./account-link";
 
 export function SiteHeader() {
+  if (usePathname() === "/") return null;
+
   return (
     <header className="site-header">
       <div className="shell header-inner">

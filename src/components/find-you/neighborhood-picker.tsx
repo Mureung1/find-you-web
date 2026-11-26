@@ -1,6 +1,6 @@
 "use client";
 
-import { MapPin } from "lucide-react";
+import { ChevronDown, MapPin } from "lucide-react";
 import { type KeyboardEvent, useEffect, useMemo, useState } from "react";
 import type { Location } from "@/lib/find-you";
 import styles from "./neighborhood-picker.module.css";
@@ -8,7 +8,7 @@ import styles from "./neighborhood-picker.module.css";
 export const regionPrefix = "region:";
 const optionLimit = 12;
 
-type Option = { value: string; label: string; keywords: string; compact: string };
+type Option = { value: string; label: string; shortLabel: string; keywords: string; compact: string };
 
 type Props = {
   id: string;
@@ -19,17 +19,18 @@ type Props = {
   onEdit?: () => void;
   placeholder: string;
   includeRegions?: boolean;
+  compact?: boolean;
   required?: boolean;
   disabled?: boolean;
 };
 
-function option(value: string, label: string): Option {
+function option(value: string, label: string, shortLabel = label): Option {
   const keywords = label.normalize("NFKC");
-  return { value, label, keywords, compact: keywords.replace(/\s+/g, "") };
+  return { value, label, shortLabel, keywords, compact: keywords.replace(/\s+/g, "") };
 }
 
 export function NeighborhoodPicker({
-  id, name, locations, value, onChange, onEdit, placeholder, includeRegions, required, disabled,
+  id, name, locations, value, onChange, onEdit, placeholder, includeRegions, compact, required, disabled,
 }: Props) {
   const [query, setQuery] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -38,7 +39,7 @@ export function NeighborhoodPicker({
 
   const options = useMemo(() => {
     const towns = locations.map(({ location_id, region, dong }) =>
-      option(location_id, region + " " + dong));
+      option(location_id, region + " " + dong, dong));
     if (!includeRegions) return towns;
     const regions = [...new Set(locations.map(({ region }) => region))];
     return [option("", "전체 동네"), ...regions.map((region) => option(regionPrefix + region, region + " 전체")), ...towns];
@@ -46,9 +47,9 @@ export function NeighborhoodPicker({
 
   const committed = options.find((choice) => choice.value === value);
   const terms = (query ?? "").normalize("NFKC").replaceAll("서울특별시", "서울").trim().split(/\s+/).filter(Boolean);
-  const compact = terms.join("");
+  const compactQuery = terms.join("");
   const matches = terms.length
-    ? options.filter((choice) => choice.compact.includes(compact) || terms.every((term) => choice.keywords.includes(term)))
+    ? options.filter((choice) => choice.compact.includes(compactQuery) || terms.every((term) => choice.keywords.includes(term)))
     : options.filter((choice) => choice.value === value || choice.value === "");
   const visible = matches.slice(0, optionLimit);
   const activeOption = open && active >= 0 && active < visible.length ? listId + "-" + active : undefined;
@@ -88,10 +89,10 @@ export function NeighborhoodPicker({
   }
 
   return (
-    <div className={styles.picker}>
+    <div className={styles.picker} data-compact={compact || undefined}>
       <div className={styles.inputWrap}>
         <MapPin size={17} aria-hidden />
-        <input id={id} role="combobox" type="text" value={query ?? (value ? committed?.label ?? "" : "")}
+        <input id={id} role="combobox" type="text" value={query ?? (value ? (compact ? committed?.shortLabel : committed?.label) ?? "" : "")}
           placeholder={placeholder} maxLength={100} autoComplete="off" required={required} disabled={disabled}
           aria-autocomplete="list" aria-expanded={open && visible.length > 0}
           aria-controls={open && visible.length ? listId : undefined} aria-activedescendant={activeOption}
@@ -105,6 +106,7 @@ export function NeighborhoodPicker({
             setOpen(true);
           }} />
         {name && <input type="hidden" name={name} value={value} />}
+        {compact && <ChevronDown className={styles.indicator} size={13} aria-hidden />}
       </div>
       {open && (
         <div className={styles.dropdown}>
